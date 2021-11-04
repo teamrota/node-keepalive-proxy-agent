@@ -1,5 +1,8 @@
 # node-keepalive-proxy-agent
 
+[Forked from https://github.com/mknj/node-keepalive-proxy-agent]
+[Changes will be contributed upstream]
+
 [![Join the chat at https://gitter.im/node-keepalive-proxy-agent/Lobby](https://badges.gitter.im/node-keepalive-proxy-agent/Lobby.svg)](https://gitter.im/node-keepalive-proxy-agent/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![npm](https://img.shields.io/npm/dw/keepalive-proxy-agent.svg)](https://www.npmjs.com/package/keepalive-proxy-agent)
 ![npm](https://img.shields.io/npm/l/keepalive-proxy-agent.svg)
