@@ -34,10 +34,12 @@ class myAgent extends https.Agent {
     let response = ''
     const dataListener = (data) => {
       response += data.toString()
-      if (!response.endsWith('\r\n\r\n')) {
-        // response not completed yet
+
+      if (response.indexOf("\r\n\r\n") < 0) {
+        // headers not yet received
         return
       }
+      
       proxySocket.removeListener('error', errorListener)
       proxySocket.removeListener('data', dataListener)
 
