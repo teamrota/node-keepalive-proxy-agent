@@ -1,5 +1,5 @@
 {
-  "name": "keepalive-proxy-agent",
+  "name": "@teamrota/node-keepalive-proxy-agent",
   "description": "proxy agent that honors keepalive",
   "main": "index.js",
   "scripts": {
