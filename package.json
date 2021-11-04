@@ -14,14 +14,17 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mknj/node-keepalive-proxy-agent.git"
+    "url": "git+https://github.com/teamrota/node-keepalive-proxy-agent.git"
+  },
+  "publishConfig": {
+    "registry":"https://npm.pkg.github.com"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mknj/node-keepalive-proxy-agent/issues"
+    "url": "https://github.com/teamrota/node-keepalive-proxy-agent/issues"
   },
-  "homepage": "https://github.com/mknj/node-keepalive-proxy-agent#readme",
+  "homepage": "https://github.com/teamrota/node-keepalive-proxy-agent#readme",
   "dependencies": {},
   "devDependencies": {
     "https-agent": "^1.0.0",
