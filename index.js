@@ -16,10 +16,22 @@ class myAgent extends https.Agent {
       if (u) {
         options.proxy = { hostname: u.hostname, port: u.port }
       }
+    } else if (typeof options.proxy === "string") {
+      options.proxy = new url.URL(options.proxy)
     }
+
+    if (options.noProxy === undefined) {
+      if (process.env.NO_PROXY !== undefined) {
+        options.noProxy = process.env.NO_PROXY.split(",")
+      }
+    } else if (typeof options.noProxy === "string") {
+      options.noProxy = options.noProxy.split(",")
+    }
+
     if (options.keepAlive === undefined) {
       options.keepAlive = true
     }
+
     super(options)
   }
 
@@ -66,11 +78,15 @@ class myAgent extends https.Agent {
     proxySocket.write(cmd)
   }
 
-  createConnection (options, cb) {
+  createConnection(options, cb) {
     if (options.proxy) {
-      this.createConnectionHttpsAfterHttp(options, cb)
+      if (options.noProxy.find(suffix => options.hostname.endsWith(suffix))) {
+        cb(null, super.createConnection(options));
+      } else {
+        this.createConnectionHttpsAfterHttp(options, cb);
+      }
     } else {
-      cb(null, super.createConnection(options))
+      cb(null, super.createConnection(options));
     }
   }
 }
