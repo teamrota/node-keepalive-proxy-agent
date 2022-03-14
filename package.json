@@ -1,13 +1,12 @@
 {
-  "name": "@teamrota/node-keepalive-proxy-agent",
+  "name": "@teamrota/keepalive-proxy-agent",
+  "version": "1.4.0",
   "description": "proxy agent that honors keepalive",
   "main": "index.js",
   "scripts": {
     "bump": "test -n \"$1\" && npm version $1 && npm publish && git push",
     "test": "standard && mocha",
-    "lint": "standard index.js testerver.js test/*.js",
-    "cov": "nyc --reporter=html --reporter=text mocha && opener coverage/index.html",
-    "travis": "nyc --reporter=json --reporter=text mocha"
+    "lint": "standard index.js testerver.js test/*.js"
   },
   "files": [
     "index.js"
@@ -19,12 +18,7 @@
   "publishConfig": {
     "registry":"https://npm.pkg.github.com"
   },
-  "author": "",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/teamrota/node-keepalive-proxy-agent/issues"
-  },
-  "homepage": "https://github.com/teamrota/node-keepalive-proxy-agent#readme",
   "dependencies": {},
   "devDependencies": {
     "https-agent": "^1.0.0",
@@ -40,6 +34,5 @@
     "standard": "^16.0.4",
     "tunnel": "0.0.6",
     "tunnel-agent": "^0.6.0"
-  },
-  "version": "1.4.0"
+  }
 }
