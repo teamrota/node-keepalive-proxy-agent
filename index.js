@@ -36,12 +36,16 @@ class myAgent extends https.Agent {
   }
 
   createConnectionHttpsAfterHttp (options, cb) {
-    const proxySocket = net.connect(+options.proxy.port, options.proxy.hostname || options.proxy.host)
+    const proxyHost = options.proxy.hostname || options.proxy.host;
+    const proxySocket = net.connect(+options.proxy.port, proxyHost)
     const errorListener = (error) => {
       proxySocket.destroy()
       cb(error)
     }
     proxySocket.once('error', errorListener)
+
+    let host = options.hostname
+    if (!host) host = options.host
 
     let response = ''
     const dataListener = (data) => {
@@ -61,15 +65,13 @@ class myAgent extends https.Agent {
         return cb(new Error(response.trim()))
       } else if (m[1] !== '200') {
         proxySocket.destroy()
-        return cb(new Error(m[0]))
+        return cb(new Error(`${m[0]} connecting to ${host}:${options.port}`))
       }
       options.socket = proxySocket // tell super function to use our proxy socket,
       cb(null, super.createConnection(options))
     }
     proxySocket.on('data', dataListener)
 
-    let host = options.hostname
-    if (!host) host = options.host
     let cmd = 'CONNECT ' + host + ':' + options.port + ' HTTP/1.1\r\n'
     if (options.proxy.auth) {
       // noinspection JSCheckFunctionSignatures
