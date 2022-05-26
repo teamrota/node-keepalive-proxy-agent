@@ -16,10 +16,11 @@
     "url": "git+https://github.com/teamrota/node-keepalive-proxy-agent.git"
   },
   "publishConfig": {
-    "registry":"https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com"
   },
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+  },
   "devDependencies": {
     "https-agent": "^1.0.0",
     "https-proxy-agent": "^5.0.0",
@@ -27,6 +28,7 @@
     "nyc": "^15.0.0",
     "opener": "^1.5.2",
     "pem": "^1.14.2",
+    "prettier": "^2.6.2",
     "proxy": "^1.0.0",
     "request": "^2.88.0",
     "should": "^13.2.3",
