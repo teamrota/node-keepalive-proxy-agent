@@ -38,10 +38,13 @@ class ProxyAgent extends https.Agent {
   createConnectionHttpsAfterHttp(options, cb) {
     const proxyHost = options.proxy.hostname || options.proxy.host;
     const proxySocket = net.connect(+options.proxy.port, proxyHost);
+    proxySocket.setKeepAlive(true, 300);
+
     const errorListener = (error) => {
       proxySocket.destroy();
       cb(error);
     };
+
     proxySocket.once("error", errorListener);
 
     let host = options.hostname;
@@ -70,6 +73,7 @@ class ProxyAgent extends https.Agent {
       options.socket = proxySocket; // tell super function to use our proxy socket,
       cb(null, super.createConnection(options));
     };
+
     proxySocket.on("data", dataListener);
 
     let cmd = "CONNECT " + host + ":" + options.port + " HTTP/1.1\r\n";
@@ -79,6 +83,7 @@ class ProxyAgent extends https.Agent {
       cmd += "Proxy-Authorization: Basic " + auth + "\r\n";
     }
     cmd += "\r\n";
+
     proxySocket.write(cmd);
   }
 
