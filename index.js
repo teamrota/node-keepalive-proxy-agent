@@ -32,13 +32,23 @@ class ProxyAgent extends https.Agent {
       options.keepAlive = true;
     }
 
+    if (options.keepAlive) {
+      options.keepAliveMsecs = 1000;
+      options.timeout = 15000;
+      options.maxSockets = 64;
+      options.maxTotalSockets = 256;
+    }
+
     super(options);
   }
 
   createConnectionHttpsAfterHttp(options, cb) {
-    const proxyHost = options.proxy.hostname || options.proxy.host;
-    const proxySocket = net.connect(+options.proxy.port, proxyHost);
-    proxySocket.setKeepAlive(true, 300);
+    const proxySocket = net.createConnection({
+      host: options.proxy.hostname || options.proxy.host,
+      port: +options.proxy.port,
+    });
+
+    proxySocket.setKeepAlive(true, options.proxySocket);
 
     const errorListener = (error) => {
       proxySocket.destroy();
@@ -55,8 +65,7 @@ class ProxyAgent extends https.Agent {
       response += data.toString();
 
       if (response.indexOf("\r\n\r\n") < 0) {
-        // headers not yet received
-        return;
+        return; // headers not yet received, wait
       }
 
       proxySocket.removeListener("error", errorListener);
@@ -70,7 +79,8 @@ class ProxyAgent extends https.Agent {
         proxySocket.destroy();
         return cb(new Error(`${m[0]} connecting to ${host}:${options.port}`));
       }
-      options.socket = proxySocket; // tell super function to use our proxy socket,
+
+      options.socket = proxySocket; // tell super function to use our proxy socket
       cb(null, super.createConnection(options));
     };
 
@@ -78,7 +88,6 @@ class ProxyAgent extends https.Agent {
 
     let cmd = "CONNECT " + host + ":" + options.port + " HTTP/1.1\r\n";
     if (options.proxy.auth) {
-      // noinspection JSCheckFunctionSignatures
       const auth = Buffer.from(options.proxy.auth).toString("base64");
       cmd += "Proxy-Authorization: Basic " + auth + "\r\n";
     }
