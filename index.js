@@ -35,7 +35,7 @@ class ProxyAgent extends https.Agent {
     if (options.keepAlive) {
       if (options.keepAliveMsecs === undefined) options.keepAliveMsecs = 1000;
       if (options.timeout === undefined) options.timeout = 15000;
-      if (options.maxSockets === undefined) options.maxSockets = 64;
+      if (options.maxSockets === undefined) options.maxSockets = 128;
       if (options.maxTotalSockets === undefined) options.maxTotalSockets = 256;
     }
 
@@ -57,6 +57,7 @@ class ProxyAgent extends https.Agent {
       } catch (e) {
         if (e.message === "Bad Socket" || e.message === "Old Socket") {
           // wil be evicted, so loop
+          console.log(e.message);
         } else {
           throw e;
         }
@@ -67,12 +68,17 @@ class ProxyAgent extends https.Agent {
   }
 
   reuseSocket(socket, req) {
-    if (
-      socket.destroyed ||
-      socket.readyState !== "open" ||
-      !socket.writable ||
-      !socket.readable
-    ) {
+    if (socket.destroyed) {
+      try {
+        socket.destroy();
+      } catch {
+        // ignore destroy errors
+      }
+
+      throw new Error("Bad Socket");
+    }
+
+    if (socket._parent && socket._parent.destroyed) {
       try {
         socket.destroy();
       } catch {
@@ -83,7 +89,6 @@ class ProxyAgent extends https.Agent {
     }
 
     // check age since creation has not exceeded max
-
     if (
       Date.now() - this.socketCreationTime.get(socket._parent) >
       this.maxAge
