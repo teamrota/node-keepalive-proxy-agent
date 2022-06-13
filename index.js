@@ -33,13 +33,71 @@ class ProxyAgent extends https.Agent {
     }
 
     if (options.keepAlive) {
-      options.keepAliveMsecs = 1000;
-      options.timeout = 15000;
-      options.maxSockets = 64;
-      options.maxTotalSockets = 256;
+      if (options.keepAliveMsecs === undefined) options.keepAliveMsecs = 1000;
+      if (options.timeout === undefined) options.timeout = 15000;
+      if (options.maxSockets === undefined) options.maxSockets = 64;
+      if (options.maxTotalSockets === undefined) options.maxTotalSockets = 256;
     }
 
     super(options);
+
+    if (options.maxAge === undefined) {
+      this.maxAge = 30000;
+    } else {
+      this.maxAge = options.maxAge;
+    }
+
+    this.socketCreationTime = new WeakMap();
+  }
+
+  addRequest(req, options, port, localAddress) {
+    for (let i = 0; i < this.maxSockets; i++) {
+      try {
+        return super.addRequest(req, options, port, localAddress);
+      } catch (e) {
+        if (e.message === "Bad Socket" || e.message === "Old Socket") {
+          // wil be evicted, so loop
+        } else {
+          throw e;
+        }
+      }
+    }
+
+    throw new Error("Unable to create working socket");
+  }
+
+  reuseSocket(socket, req) {
+    if (
+      socket.destroyed ||
+      socket.readyState !== "open" ||
+      !socket.writable ||
+      !socket.readable
+    ) {
+      try {
+        socket.destroy();
+      } catch {
+        // ignore destroy errors
+      }
+
+      throw new Error("Bad Socket");
+    }
+
+    // check age since creation has not exceeded max
+
+    if (
+      Date.now() - this.socketCreationTime.get(socket._parent) >
+      this.maxAge
+    ) {
+      try {
+        socket.destroy();
+      } catch {
+        // ignore destroy errors
+      }
+
+      throw new Error("Old Socket");
+    }
+
+    super.reuseSocket(socket, req);
   }
 
   createConnectionHttpsAfterHttp(options, cb) {
@@ -49,6 +107,8 @@ class ProxyAgent extends https.Agent {
     });
 
     proxySocket.setKeepAlive(true, options.proxySocket);
+
+    this.socketCreationTime.set(proxySocket, Date.now());
 
     const errorListener = (error) => {
       proxySocket.destroy();
@@ -80,7 +140,7 @@ class ProxyAgent extends https.Agent {
         return cb(new Error(`${m[0]} connecting to ${host}:${options.port}`));
       }
 
-      options.socket = proxySocket; // tell super function to use our proxy socket
+      options.socket = proxySocket; // tell super to use our proxy socket
       cb(null, super.createConnection(options));
     };
 

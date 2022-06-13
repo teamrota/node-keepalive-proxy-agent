@@ -36,21 +36,15 @@ const fetch = async () => {
 
 async function go() {
   for (var i = 0; i < 1000; i++) {
+    console.log("-----------------------------");
     console.log("Run", i, "at", i * 5);
 
-    for (var x = 0; x < 1; x++) {
+    for (var x = 0; x < 10; x++) {
       fetch();
     }
 
-    await sleep(15000);
+    await sleep(1000);
   }
 }
-
-setInterval(() => {
-  console.log(
-    "freeSockets = ",
-    Object.entries(agent.freeSockets).map(([k, v]) => k + " -> " + v.length)
-  );
-}, 1000);
 
 go();
