@@ -1,7 +1,6 @@
-const https = require("https");
 const net = require("net");
+const https = require("https");
 const url = require("url");
-const { randomIntBetween } = require("./util");
 
 class ProxyAgent extends https.Agent {
   constructor(options) {
@@ -58,7 +57,6 @@ class ProxyAgent extends https.Agent {
       } catch (e) {
         if (e.message === "Bad Socket" || e.message === "Old Socket") {
           // wil be evicted, so loop
-          console.log(e.message);
         } else {
           throw e;
         }
@@ -191,6 +189,10 @@ class ProxyAgent extends https.Agent {
       cb(null, super.createConnection(options));
     }
   }
+}
+
+function randomIntBetween(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 module.exports = ProxyAgent;
