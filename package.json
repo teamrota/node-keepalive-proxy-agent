@@ -1,6 +1,6 @@
 {
   "name": "@teamrota/keepalive-proxy-agent",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "proxy agent that honors keepalive",
   "main": "index.js",
   "scripts": {

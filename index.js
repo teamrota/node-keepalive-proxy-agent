@@ -1,6 +1,7 @@
 const https = require("https");
 const net = require("net");
 const url = require("url");
+const { randomIntBetween } = require("./util");
 
 class ProxyAgent extends https.Agent {
   constructor(options) {
@@ -35,23 +36,23 @@ class ProxyAgent extends https.Agent {
     if (options.keepAlive) {
       if (options.keepAliveMsecs === undefined) options.keepAliveMsecs = 1000;
       if (options.timeout === undefined) options.timeout = 15000;
-      if (options.maxSockets === undefined) options.maxSockets = 128;
+      if (options.maxSockets === undefined) options.maxSockets = 64;
       if (options.maxTotalSockets === undefined) options.maxTotalSockets = 256;
     }
 
     super(options);
 
     if (options.maxAge === undefined) {
-      this.maxAge = 30000;
+      this.maxAge = 60000;
     } else {
       this.maxAge = options.maxAge;
     }
 
-    this.socketCreationTime = new WeakMap();
+    this.socketExpiry = new WeakMap();
   }
 
   addRequest(req, options, port, localAddress) {
-    for (let i = 0; i < this.maxSockets; i++) {
+    for (let i = 0; i < this.maxSockets + 1; i++) {
       try {
         return super.addRequest(req, options, port, localAddress);
       } catch (e) {
@@ -68,7 +69,44 @@ class ProxyAgent extends https.Agent {
   }
 
   reuseSocket(socket, req) {
-    if (socket.destroyed) {
+    if (socket._parent) {
+      const parent = socket._parent;
+
+      if (parent.destroyed || !parent.writable || !parent.readable) {
+        try {
+          parent.destroy();
+        } catch {
+          // ignore destroy errors
+        }
+
+        try {
+          socket.destroy();
+        } catch {
+          // ignore destroy errors
+        }
+
+        throw new Error("Bad Socket");
+      }
+
+      // check age since creation has not exceeded max
+      if (Date.now() > this.socketExpiry.get(parent)) {
+        try {
+          parent.destroy();
+        } catch {
+          // ignore destroy errors
+        }
+
+        try {
+          socket.destroy();
+        } catch {
+          // ignore destroy errors
+        }
+
+        throw new Error("Old Socket");
+      }
+    }
+
+    if (socket.destroyed || !socket.writable || !socket.readable) {
       try {
         socket.destroy();
       } catch {
@@ -76,30 +114,6 @@ class ProxyAgent extends https.Agent {
       }
 
       throw new Error("Bad Socket");
-    }
-
-    if (socket._parent && socket._parent.destroyed) {
-      try {
-        socket.destroy();
-      } catch {
-        // ignore destroy errors
-      }
-
-      throw new Error("Bad Socket");
-    }
-
-    // check age since creation has not exceeded max
-    if (
-      Date.now() - this.socketCreationTime.get(socket._parent) >
-      this.maxAge
-    ) {
-      try {
-        socket.destroy();
-      } catch {
-        // ignore destroy errors
-      }
-
-      throw new Error("Old Socket");
     }
 
     super.reuseSocket(socket, req);
@@ -113,7 +127,12 @@ class ProxyAgent extends https.Agent {
 
     proxySocket.setKeepAlive(true, options.proxySocket);
 
-    this.socketCreationTime.set(proxySocket, Date.now());
+    // add wiggle here to avoid expiring all connections at the same moment
+    // say if a large batch of requests starts and opens all at once
+    this.socketExpiry.set(
+      proxySocket,
+      Date.now() + randomIntBetween(this.maxAge * 0.5, this.maxAge)
+    );
 
     const errorListener = (error) => {
       proxySocket.destroy();
