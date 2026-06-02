@@ -56,7 +56,7 @@ class ProxyAgent extends https.Agent {
         return super.addRequest(req, options, port, localAddress);
       } catch (e) {
         if (e.message === "Bad Socket" || e.message === "Old Socket") {
-          // wil be evicted, so loop
+          // will be evicted, so loop
         } else {
           throw e;
         }
@@ -129,7 +129,7 @@ class ProxyAgent extends https.Agent {
     // say if a large batch of requests starts and opens all at once
     this.socketExpiry.set(
       proxySocket,
-      Date.now() + randomIntBetween(this.maxAge * 0.5, this.maxAge)
+      Date.now() + randomIntBetween(this.maxAge * 0.5, this.maxAge),
     );
 
     const errorListener = (error) => {
@@ -180,7 +180,10 @@ class ProxyAgent extends https.Agent {
 
   createConnection(options, cb) {
     if (options.proxy) {
-      if (options.noProxy.find((suffix) => options.hostname.endsWith(suffix))) {
+      if (
+        options.noProxy &&
+        options.noProxy.find((suffix) => options.hostname?.endsWith(suffix))
+      ) {
         cb(null, super.createConnection(options));
       } else {
         this.createConnectionHttpsAfterHttp(options, cb);
